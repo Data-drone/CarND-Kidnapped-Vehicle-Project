@@ -30,7 +30,31 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 0;  // TODO: Set the number of particles
+  int num_particles = 1000;  // TODO: Set the number of particles
+
+  std::default_random_engine generator;
+  std::normal_distribution<double> dist_x(x,std[0]);
+  std::normal_distribution<double> dist_y(y,std[1]);
+  std::normal_distribution<double> dist_theta(theta,std[2])
+
+  std::vector<std::vector> result[num_particles];
+
+  for (int i = 0; i< num_particles, ++i) {
+    double sample_x, sample_y, sample_theta;
+
+    sample_x = dist_x(generator); 
+    sample_y = dist_y(generator);
+    sample_theta = dist_theta(generator);
+
+    std::vector<double> tuple[3];
+    tuple = [sample_x, sample_y, sample_theta]
+    result[i] = tuple;
+
+  return result
+
+  } 
+
+
 
 }
 
