@@ -104,6 +104,38 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   during the updateWeights phase.
    */
 
+  // need to check if this works on points?
+  int out_loop_length = observations.size();
+  int inner_loop_length = predicted.size();
+
+  // LandmarkObs obs_0 = observations[0];
+  // LandmarkObs pred_0 = predicted[0];
+  float min_dist = 0.0;
+
+  for (int i = 0; i < out_loop_length; ++i) {
+    LandmarkObs cur_obs = predicted[i];
+
+    for (int j = 0; j < inner_loop_length; ++j) {
+
+      LandmarkObs cur_pred = predicted[j];
+      float dist = math::sqrt((cur_pred.x - cur_obs.x)^2 + (cur_pred.y - cur_obs.y)^2);
+      
+      if (j == 0) {
+        float min_dist = dist;
+        int closest = cur_pred.id;
+      } else {
+        if (dist < min_dist) {
+          min_dist = dist;
+          closest = cur_pred,id;
+        }
+      }
+
+
+    }
+
+  // TODO save the closest id back into an object is there a mapping obj?
+  }
+
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
