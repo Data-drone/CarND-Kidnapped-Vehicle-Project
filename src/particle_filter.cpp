@@ -117,16 +117,17 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
 
     for (int j = 0; j < inner_loop_length; ++j) {
 
-      LandmarkObs cur_pred = predicted[j];
+      LandmarkObs cur_pred = observations[j];
       float dist = math::sqrt((cur_pred.x - cur_obs.x)^2 + (cur_pred.y - cur_obs.y)^2);
       
       if (j == 0) {
+  // check the assignment code to make sure it is working right
         float min_dist = dist;
-        int closest = cur_pred.id;
+        cur_obs.id = cur_pred.id;
       } else {
         if (dist < min_dist) {
           min_dist = dist;
-          closest = cur_pred,id;
+          cur_obs.id = cur_pred.id;
         }
       }
 
@@ -154,6 +155,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
+
+  
 
 }
 
