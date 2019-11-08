@@ -118,7 +118,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
     for (int j = 0; j < inner_loop_length; ++j) {
 
       LandmarkObs cur_pred = observations[j];
-      float dist = math::sqrt((cur_pred.x - cur_obs.x)^2 + (cur_pred.y - cur_obs.y)^2);
+      float error_dist = dist(cur_pred.x, cur_pred.y, cur_obs.x, cur_obs.y);
       
       if (j == 0) {
   // check the assignment code to make sure it is working right
@@ -156,7 +156,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
 
-  
+
 
 }
 
@@ -168,6 +168,16 @@ void ParticleFilter::resample() {
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
 
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::discrete_distribution<> distrib(weights);
+
+  std::vector<Particle> result;
+
+  for (int i = 0; i < weights.size(); ++i ) {
+    
+    result[i] = distrib(gen);
+  }
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, 
