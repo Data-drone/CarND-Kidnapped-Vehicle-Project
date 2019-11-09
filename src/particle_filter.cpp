@@ -156,7 +156,33 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
 
+  // take the obervations
+  // map it back to Map coords
+  // 
 
+  for (int i = 0; i < particles.size(); ++i) {
+    cur_part = particles[i];
+
+    for (int j = 0; j < observations.size(); ++j) {
+
+      cur_obs = observations[j];
+
+      // TODO convert to Map Coords
+      // I think we shldn't be using cur_obs?
+      double x_map_obs;
+      x_map_obs = cur_part.x + (cos(cur_part.theta) * cur_obs.x) - (sin(theta) * cur_obs.y);
+      double y_map_obs;
+      y_map_obs = cur_part.y + (sin(cur_part.theta) * cur_obs.x) + (cos(theta) * cur_obs.y);
+
+      // need to work out how to find nearest landmark
+      // use data association?
+
+      // with nearest neighbour then find weight with particle 
+      // TODO look at using the helper functions in the Udacity Lesson?
+
+    }
+
+  }
 
 }
 
