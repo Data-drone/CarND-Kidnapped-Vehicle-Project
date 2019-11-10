@@ -122,11 +122,11 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
       
       if (j == 0) {
   // check the assignment code to make sure it is working right
-        float min_dist = dist;
+        float min_dist = error_dist;
         cur_obs.id = cur_pred.id;
       } else {
-        if (dist < min_dist) {
-          min_dist = dist;
+        if (error_dist < min_dist) {
+          min_dist = error_dist;
           cur_obs.id = cur_pred.id;
         }
       }
