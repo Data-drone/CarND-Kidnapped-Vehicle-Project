@@ -51,8 +51,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     new_part.theta = sample_theta;
     new_part.weight = 1.0;
     
-    particles.append(new_part);
-    weights.append(1.0);
+    particles.push_back(new_part);
+    weights.push_back(1.0);
 
   ParticleFilter::is_initialized = true;
 
@@ -85,9 +85,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     std::normal_distribution<double> dist_y(update_y,std_pos[1]);
     std::normal_distribution<double> dist_theta(update_theta,std_pos[2]);
 
-    particles[i].x = dist_x;
-    particles[i].y = dist_y;
-    particles[i].theta = dist_theta;
+    particles[i].x = dist_x(generator);
+    particles[i].y = dist_y(generator);
+    particles[i].theta = dist_theta(generator);
 
   }
 
@@ -161,26 +161,36 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   // 
 
   for (int i = 0; i < particles.size(); ++i) {
-    cur_part = particles[i];
+    Particle cur_part = particles[i];
+
+    vector<LandmarkObs> trans_obs;
 
     for (int j = 0; j < observations.size(); ++j) {
 
-      cur_obs = observations[j];
+      LandmarkObs cur_obs = observations[j];
 
       // TODO convert to Map Coords
       // I think we shldn't be using cur_obs?
       double x_map_obs;
-      x_map_obs = cur_part.x + (cos(cur_part.theta) * cur_obs.x) - (sin(theta) * cur_obs.y);
+      x_map_obs = cur_part.x + (cos(cur_part.theta) * cur_obs.x) - (sin(cur_part.theta) * cur_obs.y);
       double y_map_obs;
-      y_map_obs = cur_part.y + (sin(cur_part.theta) * cur_obs.x) + (cos(theta) * cur_obs.y);
+      y_map_obs = cur_part.y + (sin(cur_part.theta) * cur_obs.x) + (cos(cur_part.theta) * cur_obs.y);
 
-      // need to work out how to find nearest landmark
-      // use data association?
+      LandmarkObs trans_observation;
+      trans_observation.id = cur_obs.id;
+      trans_observation.x = x_map_obs;
+      trans_observation.y = y_map_obs;
 
-      // with nearest neighbour then find weight with particle 
-      // TODO look at using the helper functions in the Udacity Lesson?
-
+      trans_obs[j] = trans_observation;
+      
     }
+
+    // need to work out how to find nearest landmark
+    // use data association?
+
+    // with nearest neighbour then find weight with particle 
+    // TODO look at using the helper functions in the Udacity Lesson?
+
 
   }
 
