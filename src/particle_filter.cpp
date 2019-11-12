@@ -213,6 +213,8 @@ void ParticleFilter::resample() {
     
     result[i] = particles[distrib(generator)];
   }
+
+  particles = result;
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, 
