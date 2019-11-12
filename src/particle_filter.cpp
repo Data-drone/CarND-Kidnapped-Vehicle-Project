@@ -204,15 +204,14 @@ void ParticleFilter::resample() {
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::discrete_distribution<> distrib(weights);
+  std::default_random_engine generator;
+  std::discrete_distribution<> distrib(weights.begin(), weights.end());
 
   std::vector<Particle> result;
 
   for (int i = 0; i < weights.size(); ++i ) {
     
-    result[i] = distrib(gen);
+    result[i] = particles[distrib(generator)];
   }
 }
 
