@@ -104,7 +104,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   during the updateWeights phase.
    */
 
-  // need to check if this works on points?
+  // observations is sensor readings & predicted is the predicted associations
   int out_loop_length = observations.size();
   int inner_loop_length = predicted.size();
 
@@ -112,16 +112,18 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   // LandmarkObs pred_0 = predicted[0];
   float min_dist = 0.0;
 
+  std::vector<LandmarkObs> closest;
+
   for (int i = 0; i < out_loop_length; ++i) {
-    LandmarkObs cur_obs = predicted[i];
+    LandmarkObs cur_obs = observations[i];
 
     for (int j = 0; j < inner_loop_length; ++j) {
 
-      LandmarkObs cur_pred = observations[j];
+      LandmarkObs cur_pred = predicted[j];
       float error_dist = dist(cur_pred.x, cur_pred.y, cur_obs.x, cur_obs.y);
       
+      
       if (j == 0) {
-  // check the assignment code to make sure it is working right
         float min_dist = error_dist;
         cur_obs.id = cur_pred.id;
       } else {
@@ -132,7 +134,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
       }
 
 
-    }
+    };
 
   // TODO save the closest id back into an object is there a mapping obj?
   }
@@ -186,7 +188,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     }
 
     // find observations within radius of sensor
-    std::vector<Map::single_landmark_s> close_landmarks;
+    std::vector<LandmarkObs> close_landmarks;
 
     for (int map_it = 0; map_it < map_landmarks.landmark_list.size(); ++map_it) {
       
@@ -194,10 +196,19 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
       int distance = dist(cur_part.x, cur_part.y, cur_landmark.x_f, cur_landmark.y_f);
       if (distance < sensor_range) {
-        close_landmarks.push_back(cur_landmark);
+        LandmarkObs cur_lmk;
+        cur_lmk.id = cur_landmark.id_i;
+        cur_lmk.x = cur_landmark.x_f;
+        cur_lmk.y = cur_landmark.y_f;
+        close_landmarks.push_back(cur_lmk);
       } 
 
     }
+
+    // check order
+    dataAssociation(close_landmarks, trans_obs);
+
+
 
     // need to work out how to find nearest landmark
     // use data association?
