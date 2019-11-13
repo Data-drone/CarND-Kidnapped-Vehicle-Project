@@ -185,6 +185,20 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       
     }
 
+    // find observations within radius of sensor
+    std::vector<Map::single_landmark_s> close_landmarks;
+
+    for (int map_it = 0; map_it < map_landmarks.landmark_list.size(); ++map_it) {
+      
+      Map::single_landmark_s cur_landmark = map_landmarks.landmark_list[map_it];
+
+      int distance = dist(cur_part.x, cur_part.y, cur_landmark.x_f, cur_landmark.y_f);
+      if (distance < sensor_range) {
+        close_landmarks.push_back(cur_landmark);
+      } 
+
+    }
+
     // need to work out how to find nearest landmark
     // use data association?
 
