@@ -32,7 +32,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  int num_particles = ParticleFilter::num_particles;  // TODO: Set the number of particles
+  num_particles = 300;  // TODO: Set the number of particles
 
   std::default_random_engine generator;
   std::normal_distribution<double> dist_x(x,std[0]);
@@ -76,13 +76,19 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
   std::default_random_engine generator;
   
 
-  for (int i=0; i<ParticleFilter::num_particles; ++i) {
+  for (int i=0; i<num_particles; ++i) {
     double update_x, update_y, update_theta;
     
-    update_x = particles[i].x + velocity/yaw_rate * (std::sin(particles[i].theta + yaw_rate*delta_t) - std::sin(particles[i].theta) ); 
-    update_y = particles[i].y + velocity/yaw_rate * (std::cos(particles[i].theta) - std::cos(particles[i].theta + yaw_rate*delta_t) ); 
-    update_theta = particles[i].theta + yaw_rate*delta_t;
-
+    if (abs(yaw_rate) > 1e-5) {
+      update_x = particles[i].x + velocity/yaw_rate * (std::sin(particles[i].theta + yaw_rate*delta_t) - std::sin(particles[i].theta) ); 
+      update_y = particles[i].y + velocity/yaw_rate * (std::cos(particles[i].theta) - std::cos(particles[i].theta + yaw_rate*delta_t) ); 
+      update_theta = particles[i].theta + yaw_rate*delta_t;
+    } else {
+      update_x = particles[i].x + velocity * delta_t * cos(particles[i].theta); 
+      update_y = particles[i].y + velocity * delta_t * sin(particles[i].theta);
+      update_theta = particles[i].theta;
+    }
+    
     std::normal_distribution<double> dist_x(update_x,std_pos[0]);
     std::normal_distribution<double> dist_y(update_y,std_pos[1]);
     std::normal_distribution<double> dist_theta(update_theta,std_pos[2]);
@@ -129,9 +135,8 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
       }
 
 
-    };
+    }
 
-  // TODO save the closest id back into an object is there a mapping obj?
   }
 
 }
@@ -191,7 +196,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       
       Map::single_landmark_s cur_landmark = map_landmarks.landmark_list[map_it];
 
-      int distance = dist(cur_part.x, cur_part.y, cur_landmark.x_f, cur_landmark.y_f);
+      double distance = dist(cur_part.x, cur_part.y, cur_landmark.x_f, cur_landmark.y_f);
       if (distance < sensor_range) {
         LandmarkObs cur_lmk;
         cur_lmk.id = cur_landmark.id_i;
