@@ -251,13 +251,13 @@ void ParticleFilter::resample() {
    */
 
   std::default_random_engine generator;
-  std::discrete_distribution<> distrib(weights.begin(), weights.end());
+  std::discrete_distribution<int> distrib(weights.begin(), weights.end());
 
   std::vector<Particle> result;
 
   for (std::size_t i = 0; i < weights.size(); ++i ) {
     
-    result[i] = particles[distrib(generator)];
+    result.push_back(particles[distrib(generator)]);
   }
 
   particles = result;
