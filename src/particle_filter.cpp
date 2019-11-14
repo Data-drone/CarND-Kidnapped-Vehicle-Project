@@ -6,7 +6,6 @@
  */
 
 #include "particle_filter.h"
-#include "multiv_gauss.h" 
 
 #include <math.h>
 #include <algorithm>
@@ -19,7 +18,7 @@
 #include <map>
 
 #include "helper_functions.h"
-
+#include "multiv_gauss.h" 
 
 using std::string;
 using std::vector;
