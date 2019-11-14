@@ -15,8 +15,10 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "helper_functions.h"
+#include "multiv_gauss.h" // add in the multiv gauss
 
 using std::string;
 using std::vector;
@@ -188,7 +190,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     }
 
     // find observations within radius of sensor
-    std::vector<LandmarkObs> close_landmarks;
+    std::map<int, LandmarkObs> close_landmarks;
+
+    std::vector<LandmarkObs> close_landmarks_lst;
 
     for (int map_it = 0; map_it < map_landmarks.landmark_list.size(); ++map_it) {
       
@@ -200,23 +204,42 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         cur_lmk.id = cur_landmark.id_i;
         cur_lmk.x = cur_landmark.x_f;
         cur_lmk.y = cur_landmark.y_f;
-        close_landmarks.push_back(cur_lmk);
+
+        // just being lazy don't wanna edit dataAssociation again
+        close_landmarks[cur_lmk.id]=cur_lmk;
+        close_landmarks_lst.push_back(cur_lmk);
       } 
 
     }
 
     // check order
-    dataAssociation(close_landmarks, trans_obs);
+    dataAssociation(close_landmarks_lst, trans_obs);
+    // after this step all the trans_obs will have a landmark id and a 
 
 
+    std::vector<double> weight_vec;
+    for (int k; k < trans_obs.size(); ++ k) {
 
-    // need to work out how to find nearest landmark
-    // use data association?
+      LandmarkObs cur_obs = trans_obs[k];
 
-    // with nearest neighbour then find weight with particle 
-    // TODO look at using the helper functions in the Udacity Lesson?
+      if (close_landmarks.find(cur_obs.id) != close_landmarks.end()) {
+        LandmarkObs cur_lmk = close_landmarks[cur_obs.id];
 
+        double sig_x, sig_y;
+        sig_x = std_landmark[0];
+        sig_y = std_landmark[1];
 
+        double weight;
+        weight = multiv_prob(sig_x, sig_y, cur_obs.x, cur_obs.y, cur_lmk.x, cur_lmk.y);
+        weight_vec.push_back(weight);
+      }
+      
+    }
+
+    auto final_w = std::accumulate(std::begin(weight_vec), std::end(weight_vec), , std::multiplies<double>());
+
+    // calculate the new weight
+    particles[i].weight = final_w;
   }
 
 }
