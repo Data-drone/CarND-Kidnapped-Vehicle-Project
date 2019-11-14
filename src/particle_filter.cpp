@@ -6,6 +6,7 @@
  */
 
 #include "particle_filter.h"
+#include "multiv_gauss.h" 
 
 #include <math.h>
 #include <algorithm>
@@ -18,7 +19,7 @@
 #include <map>
 
 #include "helper_functions.h"
-#include "multiv_gauss.h" // add in the multiv gauss
+
 
 using std::string;
 using std::vector;
@@ -39,7 +40,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   std::normal_distribution<double> dist_y(y,std[1]);
   std::normal_distribution<double> dist_theta(theta,std[2]);
 
-  for (int i = 0; i< num_particles, ++i) {
+  for (int i = 0; i< num_particles; ++i) {
     double sample_x, sample_y, sample_theta;
 
     sample_x = dist_x(generator); 
@@ -106,27 +107,20 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   during the updateWeights phase.
    */
 
-  // observations is sensor readings & predicted is the predicted associations
-  int out_loop_length = observations.size();
-  int inner_loop_length = predicted.size();
-
-  // LandmarkObs obs_0 = observations[0];
-  // LandmarkObs pred_0 = predicted[0];
-  float min_dist = 0.0;
-
   std::vector<LandmarkObs> closest;
 
-  for (int i = 0; i < out_loop_length; ++i) {
+  for (std::size_t i=0; i<observations.size(); ++i) {
+    
     LandmarkObs cur_obs = observations[i];
 
-    for (int j = 0; j < inner_loop_length; ++j) {
+    float min_dist;
+    for (std::size_t j = 0; j<predicted.size(); ++j) {
 
       LandmarkObs cur_pred = predicted[j];
       float error_dist = dist(cur_pred.x, cur_pred.y, cur_obs.x, cur_obs.y);
       
-      
       if (j == 0) {
-        float min_dist = error_dist;
+        min_dist = error_dist;
         cur_obs.id = cur_pred.id;
       } else {
         if (error_dist < min_dist) {
@@ -164,12 +158,12 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   // map it back to Map coords
   // 
 
-  for (int i = 0; i < particles.size(); ++i) {
+  for (std::size_t i = 0; i < particles.size(); ++i) {
     Particle cur_part = particles[i];
 
     vector<LandmarkObs> trans_obs;
 
-    for (int j = 0; j < observations.size(); ++j) {
+    for (std::size_t j = 0; j < observations.size(); ++j) {
 
       LandmarkObs cur_obs = observations[j];
 
@@ -194,7 +188,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     std::vector<LandmarkObs> close_landmarks_lst;
 
-    for (int map_it = 0; map_it < map_landmarks.landmark_list.size(); ++map_it) {
+    for (std::size_t map_it = 0; map_it < map_landmarks.landmark_list.size(); ++map_it) {
       
       Map::single_landmark_s cur_landmark = map_landmarks.landmark_list[map_it];
 
@@ -218,7 +212,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 
     std::vector<double> weight_vec;
-    for (int k; k < trans_obs.size(); ++ k) {
+    for (std::size_t k; k < trans_obs.size(); ++ k) {
 
       LandmarkObs cur_obs = trans_obs[k];
 
@@ -236,7 +230,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       
     }
 
-    auto final_w = std::accumulate(std::begin(weight_vec), std::end(weight_vec), , std::multiplies<double>());
+    auto final_w = std::accumulate(std::begin(weight_vec), std::end(weight_vec), 1, std::multiplies<double>());
 
     // calculate the new weight
     particles[i].weight = final_w;
@@ -257,7 +251,7 @@ void ParticleFilter::resample() {
 
   std::vector<Particle> result;
 
-  for (int i = 0; i < weights.size(); ++i ) {
+  for (std::size_t i = 0; i < weights.size(); ++i ) {
     
     result[i] = particles[distrib(generator)];
   }
