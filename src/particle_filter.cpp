@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include<valarray>
 
 #include "helper_functions.h"
 #include "multiv_gauss.h" 
@@ -119,32 +120,37 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   during the updateWeights phase.
    */
 
+  // predicted the landmark list | observations is the transformed observations
+}
+
+vector<LandmarkObs> associate_obs(vector<LandmarkObs> predicted, 
+                                     vector<LandmarkObs>& observations) {
+
+                                     
   std::vector<LandmarkObs> closest;
 
   for (std::size_t i=0; i<observations.size(); ++i) {
     
     LandmarkObs cur_obs = observations.at(i);
 
-    float min_dist;
+    double min_dist=std::numeric_limits<double>::max();
+
     for (std::size_t j = 0; j<predicted.size(); ++j) {
 
       LandmarkObs cur_pred = predicted[j];
-      float error_dist = dist(cur_pred.x, cur_pred.y, cur_obs.x, cur_obs.y);
+      double error_dist = dist(cur_pred.x, cur_pred.y, cur_obs.x, cur_obs.y);
       
-      if (j == 0) {
+      if (error_dist < min_dist) {
         min_dist = error_dist;
         cur_obs.id = cur_pred.id;
-      } else {
-        if (error_dist < min_dist) {
-          min_dist = error_dist;
-          cur_obs.id = cur_pred.id;
-        }
       }
-
-
     }
 
+    closest.push_back(cur_obs);
+
   }
+
+  return closest;
 
 }
 
@@ -169,12 +175,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   // map it back to Map coords
   // 
 
-  std::cout << "Updating" << std::endl;
+  //std::cout << "Updating" << std::endl;
 
   vector<double> fin_weights; 
   
   
   for (std::size_t i = 0; i < particles.size(); ++i) {
+    
     Particle cur_part = particles.at(i);
 
     vector<LandmarkObs> trans_obs;
@@ -218,11 +225,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     
     // check order
-    dataAssociation(close_landmarks_lst, trans_obs);
+    trans_obs = associate_obs(close_landmarks_lst, trans_obs);
     // after this step all the trans_obs will have a landmark id and a 
 
-    // checked to here
     std::vector<double> weight_vec;
+    double weight_update;
 
     for (std::size_t k; k < trans_obs.size(); ++ k) {
 
@@ -247,11 +254,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     // calculate the new weight
     particles[i].weight = final_w;
     fin_weights.push_back(final_w);
+    weights[i] = final_w;
   
   }
 
-  weights = fin_weights;
-  
   
 }
 
@@ -266,6 +272,7 @@ void ParticleFilter::resample() {
   //std::cout << "Resample" << std::endl;
   
   std::default_random_engine generator;
+
   std::discrete_distribution<int> distrib(weights.begin(), weights.end());
 
   std::vector<Particle> result(num_particles);
@@ -273,6 +280,7 @@ void ParticleFilter::resample() {
   for (std::size_t i = 0; i < weights.size(); ++i ) {
     int value = distrib(generator);
     result.push_back(particles[value]);
+    //result.at(i) = particles.at(value);
   }
 
   particles = result;
