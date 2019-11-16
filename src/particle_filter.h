@@ -12,7 +12,6 @@
 #include <string>
 #include <vector>
 #include "helper_functions.h"
-#include "multiv_gauss.h" 
 
 struct Particle {
   int id;

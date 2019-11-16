@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include<valarray>
+#include <valarray>
 
 #include "helper_functions.h"
 #include "multiv_gauss.h" 
@@ -127,7 +127,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
 //vector<LandmarkObs> associate_obs(vector<LandmarkObs> predicted, 
 //                                     vector<LandmarkObs>& observations) {
                                   
-  std::vector<LandmarkObs> closest;
+  std::cout << "running associations" << std::endl;
 
   for (std::size_t i=0; i<observations.size(); ++i) {
     
@@ -136,13 +136,13 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
     double min_dist=std::numeric_limits<double>::max();
 
     for (std::size_t j = 0; j<predicted.size(); ++j) {
-
       LandmarkObs cur_pred = predicted[j];
+
       double error_dist = dist(cur_pred.x, cur_pred.y, cur_obs.x, cur_obs.y);
       
       if (error_dist < min_dist) {
         min_dist = error_dist;
-        observations.at(i).id = cur_pred.id;
+        observations.at(i).id = j;
       }
     }
 
@@ -167,18 +167,16 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
 
-  // take the obervations
-  // map it back to Map coords
-  // 
+  double sig_x, sig_y;
+  sig_x = std_landmark[0];
+  sig_y = std_landmark[1];
 
-  //std::cout << "Updating" << std::endl;
-
-  vector<double> fin_weights; 
-  
   for (std::size_t i = 0; i < particles.size(); ++i) {
     
     Particle cur_part = particles.at(i);
+
     vector<LandmarkObs> trans_obs;
+    double weight_update = 1.0;
 
     int obs_length = observations.size();
 
@@ -192,13 +190,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
       trans_obs.push_back(trans_observation);
     }
-
-    std::map<int, LandmarkObs> close_landmarks;
+    
     std::vector<LandmarkObs> close_landmarks_lst;
 
     std::cout << "observations list: " << observations.size() << std::endl;
     std::cout << "transformed observations list: " << trans_obs.size() << std::endl;
-    
     
     // find observations within radius of sensor
 
@@ -214,7 +210,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         cur_lmk.y = cur_landmark.y_f;
 
         // just being lazy don't wanna edit dataAssociation again
-        close_landmarks[cur_lmk.id]=cur_lmk;
         close_landmarks_lst.push_back(cur_lmk);
       } 
 
@@ -224,51 +219,28 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     
     // this bit breaks
     // we aren't calculating weight properly
-    dataAssociation(close_landmarks_lst, trans_obs);;
-    
+    dataAssociation(close_landmarks_lst, trans_obs);
     // after this step all the trans_obs will have a landmark id and a 
 
-    double weight_update = 1.0;
-
+    double weight_prob;
     for (std::size_t k; k < trans_obs.size(); ++ k) {
 
       LandmarkObs cur_obs = trans_obs[k];
+      LandmarkObs close_landmark = close_landmarks_lst[cur_obs.id];
 
-      if (close_landmarks.find(cur_obs.id) != close_landmarks.end()) {
-        LandmarkObs cur_lmk = close_landmarks[cur_obs.id];
+      weight_prob = multiv_prob(sig_x, sig_y, cur_obs.x, cur_obs.y, close_landmark.x, close_landmark.y);
+      std::cout << "weight_prob "  << weight_prob << std::endl;
 
-        double sig_x, sig_y;
-        sig_x = std_landmark[0];
-        sig_y = std_landmark[1];
-
-        double weight;
-        weight = multiv_prob(sig_x, sig_y, cur_obs.x, cur_obs.y, cur_lmk.x, cur_lmk.y);
-        weight_update = weight_update*weight;
-      }
+      weight_update *= weight_prob;
       
     }
 
+    std::cout << "weight_update " << weight_update << std::endl;
     // calculate the new weight
-    particles.at(i).weight = weight_update;
-    //weights[i] = weight_update;
+    particles[i].weight = weight_update;
+    weights[i] = particles[i].weight;
   
   }
-
-  for (std::size_t l=0;l<particles.size(); ++l) {
-    double part_wei = particles.at(l).weight;
-    fin_weights.push_back(part_wei);
-  }
-
-  // test
-  double norm_fact = 0.0;
-  for (std::size_t l=0;l<fin_weights.size(); ++l) {
-    norm_fact +=fin_weights[l];
-
-    fin_weights[l] = fin_weights[l]/norm_fact;
-  }
-
-  weights = fin_weights;
-
   
 }
 
@@ -280,15 +252,15 @@ void ParticleFilter::resample() {
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
 
-  //std::cout << "Resample" << std::endl;
+  std::cout << "Resample" << std::endl;
   
   std::default_random_engine generator;
-
-  std::discrete_distribution<int> distrib(weights.begin(), weights.end());
 
   std::vector<Particle> result;
 
   for (std::size_t i = 0; i < weights.size(); ++i ) {
+
+    std::discrete_distribution<int> distrib(weights.begin(), weights.end());
     int value = distrib(generator);
     result.push_back(particles[value]);
     //result.at(i) = particles.at(value);
