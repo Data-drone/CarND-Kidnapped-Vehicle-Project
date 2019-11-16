@@ -19,10 +19,29 @@
 #include <valarray>
 
 #include "helper_functions.h"
-#include "multiv_gauss.h" 
 
 using std::string;
 using std::vector;
+
+double multiv_prob(double sig_x, double sig_y, double x_obs, double y_obs,
+                   double mu_x, double mu_y) {
+
+  std::cout << "calc prob" << std::endl;
+  // calculate normalization term
+  double gauss_norm;
+  gauss_norm = 1 / (2 * M_PI * sig_x * sig_y);
+
+  // calculate exponent
+  double exponent;
+  exponent = (pow(x_obs - mu_x, 2) / (2 * pow(sig_x, 2)))
+               + (pow(y_obs - mu_y, 2) / (2 * pow(sig_y, 2)));
+    
+  // calculate weight using normalization terms and exponent
+  double weight;
+  weight = gauss_norm * exp(-exponent);
+    
+  return weight;
+}
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   /**
@@ -33,7 +52,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 200;  // TODO: Set the number of particles
+  num_particles = 100;  // TODO: Set the number of particles
 
   std::default_random_engine generator;
   std::normal_distribution<double> dist_x(x,std[0]);
@@ -179,7 +198,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     double weight_update = 1.0;
 
     int obs_length = observations.size();
-
     for (int j = 0; j < obs_length; ++j) {
       LandmarkObs cur_obs = observations.at(j);
 
@@ -193,8 +211,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     
     std::vector<LandmarkObs> close_landmarks_lst;
 
-    std::cout << "observations list: " << observations.size() << std::endl;
-    std::cout << "transformed observations list: " << trans_obs.size() << std::endl;
+    //std::cout << "observations list: " << observations.size() << std::endl;
+    //std::cout << "transformed observations list: " << trans_obs.size() << std::endl;
     
     // find observations within radius of sensor
 
@@ -217,25 +235,24 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     std::cout << "close landmark's list: " << close_landmarks_lst.size() << std::endl;
     
-    // this bit breaks
-    // we aren't calculating weight properly
     dataAssociation(close_landmarks_lst, trans_obs);
-    // after this step all the trans_obs will have a landmark id and a 
-
+    
     double weight_prob;
-    for (std::size_t k; k < trans_obs.size(); ++ k) {
 
+    // this loop doesn't seem to be running?
+    std::cout << "recheck trans_obs size: " << trans_obs.size() << std::endl;
+    for (std::size_t k = 0; k < trans_obs.size(); ++k) {
+
+      std::cout << "entering loop?" << std::endl;
       LandmarkObs cur_obs = trans_obs[k];
       LandmarkObs close_landmark = close_landmarks_lst[cur_obs.id];
 
       weight_prob = multiv_prob(sig_x, sig_y, cur_obs.x, cur_obs.y, close_landmark.x, close_landmark.y);
-      std::cout << "weight_prob "  << weight_prob << std::endl;
-
       weight_update *= weight_prob;
       
     }
 
-    std::cout << "weight_update " << weight_update << std::endl;
+    std::cout << "updating weight of " << i << " to " << weight_update << std::endl;
     // calculate the new weight
     particles[i].weight = weight_update;
     weights[i] = particles[i].weight;
