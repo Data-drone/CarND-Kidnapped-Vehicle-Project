@@ -26,7 +26,7 @@ using std::vector;
 double multiv_prob(double sig_x, double sig_y, double x_obs, double y_obs,
                    double mu_x, double mu_y) {
 
-  std::cout << "calc prob" << std::endl;
+  //std::cout << "calc prob" << std::endl;
   // calculate normalization term
   double gauss_norm;
   gauss_norm = 1 / (2 * M_PI * sig_x * sig_y);
@@ -55,6 +55,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   num_particles = 100;  // TODO: Set the number of particles
 
   std::default_random_engine generator;
+
   std::normal_distribution<double> dist_x(x,std[0]);
   std::normal_distribution<double> dist_y(y,std[1]);
   std::normal_distribution<double> dist_theta(theta,std[2]);
@@ -76,13 +77,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     particles.push_back(new_part);
     weights.push_back(1.0);
 
+  }
   is_initialized = true;
-
-  //std::cout << "Initialised" << std::endl;
-
-  return;
-  } 
-
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], 
@@ -190,9 +186,12 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   sig_x = std_landmark[0];
   sig_y = std_landmark[1];
 
-  for (std::size_t i = 0; i < particles.size(); ++i) {
+  std::cout << "check particles: " << particles.size() << std::endl;
+  std::cout << "check weights: " << weights.size() << std::endl;
+
+  for (int i=0; i<num_particles; ++i) {
     
-    Particle cur_part = particles.at(i);
+    Particle cur_part = particles[i];
 
     vector<LandmarkObs> trans_obs;
     double weight_update = 1.0;
@@ -240,10 +239,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     double weight_prob;
 
     // this loop doesn't seem to be running?
-    std::cout << "recheck trans_obs size: " << trans_obs.size() << std::endl;
+    //std::cout << "recheck trans_obs size: " << trans_obs.size() << std::endl;
     for (std::size_t k = 0; k < trans_obs.size(); ++k) {
 
-      std::cout << "entering loop?" << std::endl;
+      //std::cout << "entering loop?" << std::endl;
       LandmarkObs cur_obs = trans_obs[k];
       LandmarkObs close_landmark = close_landmarks_lst[cur_obs.id];
 
@@ -252,11 +251,26 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       
     }
 
-    std::cout << "updating weight of " << i << " to " << weight_update << std::endl;
+    // to stop NaNs and zero weight
+    if (weight_update == 0) {
+      weight_update += 1e-5;
+    }
+
+    //std::cout << "updating weight of " << i << " to " << weight_update << std::endl;
     // calculate the new weight
     particles[i].weight = weight_update;
     weights[i] = particles[i].weight;
   
+  }
+
+  double total=0;
+  for (std::size_t w=0; w<weights.size(); ++w) {
+    total += weights[w];
+  }
+
+  for (std::size_t x=0; x<weights.size(); ++x) {
+    weights[x] *= 1/total;
+    particles[x].weight *= 1/total;
   }
   
 }
