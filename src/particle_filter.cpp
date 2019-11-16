@@ -224,12 +224,14 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     }
 
     
-    // check order
+    // this bit breaks
+    // we aren't calculating weight properly
+    
     trans_obs = associate_obs(close_landmarks_lst, trans_obs);
     // after this step all the trans_obs will have a landmark id and a 
 
     std::vector<double> weight_vec;
-    double weight_update;
+    double weight_update = 1.0;
 
     for (std::size_t k; k < trans_obs.size(); ++ k) {
 
@@ -245,16 +247,15 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         double weight;
         weight = multiv_prob(sig_x, sig_y, cur_obs.x, cur_obs.y, cur_lmk.x, cur_lmk.y);
         weight_vec.push_back(weight);
+        weight_update = weight_update*weight;
       }
       
     }
 
     auto final_w = std::accumulate(std::begin(weight_vec), std::end(weight_vec), 1, std::multiplies<double>());
-
     // calculate the new weight
-    particles[i].weight = final_w;
-    fin_weights.push_back(final_w);
-    weights[i] = final_w;
+    particles[i].weight = weight_update;
+    //weights[i] = weight_update;
   
   }
 
